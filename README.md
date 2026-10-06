@@ -8,3 +8,12 @@ HELIX is a documentation-only project for practicing the Git and GitHub workflow
 - Develop and merge a small improvement through a feature branch.
 - Link a GitHub Issue to the change that resolves it.
 - Create and manually resolve a merge conflict with a second contributor.
+
+## Quick start
+
+```sh
+git clone https://github.com/Nithyashree-29112006/HELIX.git
+cd HELIX
+git status
+git log --oneline
+```
