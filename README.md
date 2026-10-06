@@ -23,11 +23,11 @@ git log --oneline
 Create a branch, make and review a README change, then commit and publish the branch:
 
 ```sh
-git switch -c feature/my-change
+git switch -c docs/my-change
 git diff
 git add README.md
 git commit -m "Describe the change"
-git push -u origin feature/my-change
+git push -u origin docs/my-change
 ```
 
 Changes made on GitHub can be synchronized to your local clone with `git pull origin main`.
