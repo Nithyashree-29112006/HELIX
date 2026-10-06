@@ -17,3 +17,15 @@ cd HELIX
 git status
 git log --oneline
 ```
+
+## Feature branch workflow
+
+Create a branch, make and review a README change, then commit and publish the branch:
+
+```sh
+git switch -c feature/my-change
+git diff
+git add README.md
+git commit -m "Describe the change"
+git push -u origin feature/my-change
+```
