@@ -29,3 +29,5 @@ git add README.md
 git commit -m "Describe the change"
 git push -u origin feature/my-change
 ```
+
+Changes made on GitHub can be synchronized to your local clone with `git pull origin main`.
