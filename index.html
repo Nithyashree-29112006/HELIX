@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HELIX - Clinical Workflow System</title>
+  <!-- Google Fonts Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-icon">🧬</div>
+      <div class="brand-text">
+        <h1>HELIX</h1>
+        <span>Clinical Workflow System</span>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <div id="user-profile" class="user-badge" style="display: none;">
+        <span id="user-role-pill" class="role-pill">Doctor</span>
+        <span id="user-display-name" style="font-weight: 600;">Dr. Alexander Brooks</span>
+      </div>
+      <button id="logout-btn" class="btn btn-outline btn-sm" style="display: none;" onclick="logout()">Log Out</button>
+    </div>
+  </header>
+
+  <!-- Role Switcher Bar: ONLY displayed when logged in as ADMIN -->
+  <nav id="role-switch-bar" class="role-switch-bar" style="display: none;">
+    <span style="font-weight: 600; color: var(--admin-color);">⚙️ Admin Role Switch:</span>
+    <button class="role-tab" data-role="doctor" onclick="quickSwitchRole('doctor')">👨‍⚕️ Doctor View</button>
+    <button class="role-tab" data-role="nurse" onclick="quickSwitchRole('nurse')">👩‍⚕️ Nurse View</button>
+    <button class="role-tab" data-role="medical" onclick="quickSwitchRole('medical')">🏥 Medical Staff View</button>
+    <button class="role-tab" data-role="admin" onclick="quickSwitchRole('admin')">⚙️ Admin Dashboard</button>
+  </nav>
+
+  <!-- Main Container -->
+  <main class="main-content">
+
+    <!-- ==============================================
+         1. LOGIN VIEW (Always visible on first visit)
+         ============================================== -->
+    <section id="login-view" class="screen-view active">
+      <div style="max-width: 440px; margin: 3rem auto;">
+        <div class="card" style="box-shadow: var(--shadow-md);">
+          <div class="card-header" style="justify-content: center; text-align: center; flex-direction: column;">
+            <div class="brand-icon" style="margin-bottom: 0.5rem; width: 48px; height: 48px; font-size: 1.5rem;">🧬</div>
+            <h2 class="card-title">Sign In to HELIX</h2>
+            <p class="card-subtitle">Select your medical role to access your assigned workstation</p>
+          </div>
+
+          <div style="margin-bottom: 1.25rem;">
+            <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">Select Role to Login:</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+              <button class="btn btn-outline btn-sm" onclick="quickLogin('doctor')" style="border-left: 3px solid var(--doctor-color);">👨‍⚕️ Doctor</button>
+              <button class="btn btn-outline btn-sm" onclick="quickLogin('nurse')" style="border-left: 3px solid var(--nurse-color);">👩‍⚕️ Nurse</button>
+              <button class="btn btn-outline btn-sm" onclick="quickLogin('medical')" style="border-left: 3px solid var(--medical-color);">🏥 Medical Staff</button>
+              <button class="btn btn-outline btn-sm" onclick="quickLogin('admin')" style="border-left: 3px solid var(--admin-color);">⚙️ Admin</button>
+            </div>
+          </div>
+
+          <div style="position: relative; text-align: center; margin: 1.25rem 0;">
+            <hr style="border: none; border-top: 1px solid var(--border);">
+            <span style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: white; padding: 0 0.5rem; font-size: 0.75rem; color: var(--text-muted);">or login with credentials</span>
+          </div>
+
+          <form id="login-form" onsubmit="handleManualLogin(event)">
+            <div class="form-group">
+              <label for="login-username">Username</label>
+              <input type="text" id="login-username" class="form-control" placeholder="doctor / nurse / medical / admin" required>
+            </div>
+            <div class="form-group">
+              <label for="login-password">Password</label>
+              <input type="password" id="login-password" class="form-control" placeholder="Enter password (e.g. doctor)" required>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">Sign In</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ==============================================
+         2. NURSE VIEW (Visible ONLY when logged in as Nurse)
+         ============================================== -->
+    <section id="nurse-view" class="screen-view">
+      <div class="grid-2col">
+        
+        <!-- Left Column: Patient Queue -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">📋 Patient Waiting Queue</h2>
+              <span class="card-subtitle">Live queue with wait-time tracking</span>
+            </div>
+            <span id="nurse-queue-count" class="badge" style="background: var(--surface-alt); padding: 0.2rem 0.6rem; border-radius: 9999px; font-weight: 700; font-size: 0.85rem; border: 1px solid var(--border);">0 Patients</span>
+          </div>
+
+          <div style="font-size: 0.75rem; display: flex; gap: 0.75rem; margin-bottom: 0.75rem; color: var(--text-muted);">
+            <span style="display: flex; align-items: center; gap: 0.25rem;"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--success);"></span> &lt;30m</span>
+            <span style="display: flex; align-items: center; gap: 0.25rem;"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--warning);"></span> 30m - 2h</span>
+            <span style="display: flex; align-items: center; gap: 0.25rem;"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--danger);"></span> &gt;2h</span>
+          </div>
+
+          <div id="nurse-queue-list" class="queue-list">
+            <!-- Rendered by app.js -->
+          </div>
+        </div>
+
+        <!-- Right Column: Patient Intake Form -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">📝 Register New Patient</h2>
+              <span class="card-subtitle">Record patient details and initial medical readings</span>
+            </div>
+          </div>
+
+          <form id="patient-registration-form" onsubmit="handleRegisterPatient(event)">
+            <div class="form-row">
+              <div class="form-group" style="grid-column: span 2;">
+                <label for="reg-name">Full Name *</label>
+                <input type="text" id="reg-name" class="form-control" placeholder="e.g. David Williams" required>
+              </div>
+              <div class="form-group">
+                <label for="reg-age">Age *</label>
+                <input type="number" id="reg-age" class="form-control" placeholder="Years" min="1" max="120" required>
+              </div>
+              <div class="form-group">
+                <label for="reg-gender">Gender</label>
+                <select id="reg-gender" class="form-control">
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="reg-contact">Contact Phone *</label>
+                <input type="tel" id="reg-contact" class="form-control" placeholder="10-digit number" required>
+              </div>
+              <div class="form-group">
+                <label for="reg-weight">Weight (kg)</label>
+                <input type="number" id="reg-weight" step="0.5" class="form-control" placeholder="e.g. 70">
+              </div>
+              <div class="form-group">
+                <label for="reg-height">Height (cm)</label>
+                <input type="number" id="reg-height" step="1" class="form-control" placeholder="e.g. 172">
+              </div>
+            </div>
+
+            <hr style="border: none; border-top: 1px dashed var(--border); margin: 0.75rem 0;">
+
+            <label style="font-size: 0.825rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.5rem; display: block;">🩺 Medical Readings (Vitals)</label>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="reg-bp">Blood Pressure</label>
+                <input type="text" id="reg-bp" class="form-control" placeholder="e.g. 120/80">
+              </div>
+              <div class="form-group">
+                <label for="reg-sugar">Sugar Level</label>
+                <input type="text" id="reg-sugar" class="form-control" placeholder="e.g. 105 mg/dL">
+              </div>
+              <div class="form-group">
+                <label for="reg-fever">Fever Temp</label>
+                <input type="text" id="reg-fever" class="form-control" placeholder="e.g. 99.2 °F">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Tests Taken</label>
+              <div class="checkbox-group">
+                <label class="checkbox-label"><input type="checkbox" name="tests" value="Blood Test"> Blood Test</label>
+                <label class="checkbox-label"><input type="checkbox" name="tests" value="Urine Test"> Urine Test</label>
+                <label class="checkbox-label"><input type="checkbox" name="tests" value="X-Ray"> X-Ray</label>
+                <label class="checkbox-label"><input type="checkbox" name="tests" value="ECG"> ECG</label>
+                <label class="checkbox-label"><input type="checkbox" name="tests" value="CT Scan"> CT Scan</label>
+                <label class="checkbox-label"><input type="checkbox" name="tests" value="MRI"> MRI</label>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="reg-allergies">Allergies (if any)</label>
+                <input type="text" id="reg-allergies" class="form-control" placeholder="e.g. None / Penicillin">
+              </div>
+              <div class="form-group">
+                <label for="reg-history">Medical History</label>
+                <input type="text" id="reg-history" class="form-control" placeholder="e.g. Asthma, Hypertension">
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">+ Add Patient to Queue</button>
+          </form>
+        </div>
+
+      </div>
+    </section>
+
+
+    <!-- ==============================================
+         3. DOCTOR VIEW (Visible ONLY when logged in as Doctor)
+         ============================================= -->
+    <section id="doctor-view" class="screen-view">
+      <div class="grid-2col">
+
+        <!-- Left Column: Assigned / Waiting Patients -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">👨‍⚕️ Patients Ready for Doctor</h2>
+              <span class="card-subtitle">Select a patient to prescribe medicines</span>
+            </div>
+            <span id="doctor-queue-count" class="badge" style="background: var(--surface-alt); padding: 0.2rem 0.6rem; border-radius: 9999px; font-weight: 700; font-size: 0.85rem; border: 1px solid var(--border);">0 Patients</span>
+          </div>
+
+          <div id="doctor-patients-list" class="queue-list">
+            <!-- Rendered by app.js -->
+          </div>
+        </div>
+
+        <!-- Right Column: Active Consultation & Prescription Builder -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">💊 Prescription Builder</h2>
+              <span class="card-subtitle" id="consultation-patient-title">No patient selected</span>
+            </div>
+          </div>
+
+          <div id="no-patient-selected" class="empty-state">
+            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">👈</div>
+            <p><strong>Please select a patient from the queue</strong></p>
+            <p style="font-size: 0.8rem;">Click "Consult Patient" on any patient sent by the nurse to start prescribing.</p>
+          </div>
+
+          <div id="patient-consultation-panel" style="display: none;">
+            
+            <!-- Patient Vitals Summary -->
+            <div id="consultation-vitals" class="patient-vitals-summary">
+              <!-- Rendered dynamically -->
+            </div>
+
+            <!-- Add Medicine To Prescription Section -->
+            <div style="background: var(--surface-alt); padding: 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border); margin-bottom: 1rem;">
+              <label style="font-weight: 700; font-size: 0.85rem; margin-bottom: 0.5rem; display: block;">+ Add Medicine to Prescription</label>
+              
+              <div class="form-row">
+                <div class="form-group" style="grid-column: span 2;">
+                  <label for="presc-med-select">Select Medicine</label>
+                  <select id="presc-med-select" class="form-control">
+                    <!-- Populated from medicine inventory -->
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="presc-dosage">Dosage / Timing</label>
+                  <select id="presc-dosage" class="form-control">
+                    <option value="1-0-1 (After Food)">1-0-1 (Morning & Night)</option>
+                    <option value="1-0-0 (Morning)">1-0-0 (Morning only)</option>
+                    <option value="0-0-1 (Night)">0-0-1 (Night only)</option>
+                    <option value="1-1-1 (Thrice daily)">1-1-1 (Thrice daily)</option>
+                    <option value="1-0-0 (Empty Stomach)">1-0-0 (Empty stomach)</option>
+                    <option value="SOS (As needed)">SOS (As needed)</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="presc-duration">Duration</label>
+                  <input type="text" id="presc-duration" class="form-control" placeholder="e.g. 5 Days" value="5 Days">
+                </div>
+              </div>
+
+              <button type="button" class="btn btn-primary btn-sm" onclick="handleAddMedicineToPrescription()">+ Add to Prescription</button>
+            </div>
+
+            <!-- Current Prescribed Medicines List -->
+            <div>
+              <label style="font-weight: 700; font-size: 0.85rem;">Prescribed Medicines (<span id="prescribed-count">0</span>)</label>
+              <table class="prescribed-list">
+                <thead>
+                  <tr>
+                    <th>Medicine</th>
+                    <th>Strength</th>
+                    <th>Dosage</th>
+                    <th>Duration</th>
+                    <th style="width: 50px;">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="prescribed-items-tbody">
+                  <!-- Populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Doctor Notes / Diagnosis -->
+            <div class="form-group">
+              <label for="doctor-notes">Doctor's Clinical Notes / Advice</label>
+              <textarea id="doctor-notes" class="form-control" rows="2" placeholder="e.g. Rest for 3 days, drink plenty of fluids, review in 1 week if fever persists."></textarea>
+            </div>
+
+            <!-- Save Prescription Button -->
+            <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+              <button type="button" class="btn btn-outline" onclick="cancelConsultation()">Cancel</button>
+              <button type="button" class="btn btn-success" onclick="savePrescription()">💾 Save Prescription</button>
+            </div>
+
+            <div id="prescription-saved-banner" class="prescription-success-box" style="display: none;">
+              <strong>✅ Prescription Saved!</strong> Consultation completed and patient record updated.
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+
+    <!-- ==============================================
+         4. MEDICAL STAFF / PHARMACY VIEW (Visible ONLY when logged in as Medical Staff)
+         ============================================== -->
+    <section id="medical-view" class="screen-view">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">🏥 Medicine Database & Stock Dispensing</h2>
+            <span class="card-subtitle">Browse clinic inventory, dispense medication, and adjust stock units</span>
+          </div>
+          <div style="width: 250px;">
+            <input type="text" id="med-search-input" class="form-control" placeholder="🔍 Search medicine or brand..." oninput="handleMedicineSearch()">
+          </div>
+        </div>
+
+        <!-- Department / Branch Filter Tabs -->
+        <div class="filter-tabs" id="branch-filters">
+          <button class="filter-tab-btn active" data-branch="All" onclick="filterMedicines('All')">All Medicines</button>
+          <button class="filter-tab-btn" data-branch="Cardiology" onclick="filterMedicines('Cardiology')">Cardiology</button>
+          <button class="filter-tab-btn" data-branch="Dermatology" onclick="filterMedicines('Dermatology')">Dermatology</button>
+          <button class="filter-tab-btn" data-branch="General" onclick="filterMedicines('General')">General</button>
+          <button class="filter-tab-btn" data-branch="Orthopedics" onclick="filterMedicines('Orthopedics')">Orthopedics</button>
+          <button class="filter-tab-btn" data-branch="Pediatrics" onclick="filterMedicines('Pediatrics')">Pediatrics</button>
+        </div>
+
+        <!-- Medicine Table -->
+        <div style="overflow-x: auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Medicine Name</th>
+                <th>Strength / Power</th>
+                <th>Department</th>
+                <th>Manufacturer</th>
+                <th>MRP (₹)</th>
+                <th>Current Stock</th>
+                <th style="min-width: 170px;">Dispense / Reduce Stock</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="medicine-table-tbody">
+              <!-- Rendered by app.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ==============================================
+         5. ADMIN VIEW (Visible ONLY when logged in as Admin)
+         ============================================== -->
+    <section id="admin-view" class="screen-view">
+      
+      <!-- System Overview Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon" style="background: var(--nurse-color);">📋</div>
+          <div class="stat-info">
+            <div id="stat-queue-count" class="stat-num">0</div>
+            <div class="stat-desc">In Queue</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background: var(--doctor-color);">🩺</div>
+          <div class="stat-info">
+            <div id="stat-prescriptions-count" class="stat-num">0</div>
+            <div class="stat-desc">Prescriptions</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background: var(--medical-color);">💊</div>
+          <div class="stat-info">
+            <div id="stat-medicines-count" class="stat-num">0</div>
+            <div class="stat-desc">Medicines in Catalog</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background: var(--admin-color);">👥</div>
+          <div class="stat-info">
+            <div id="stat-patients-total" class="stat-num">0</div>
+            <div class="stat-desc">Total Registered</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2col">
+        
+        <!-- Add New Medicine Form -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">➕ Add Medicine to Database</h2>
+              <span class="card-subtitle">Register new pharmaceutical product</span>
+            </div>
+          </div>
+
+          <form id="add-medicine-form" onsubmit="handleAddMedicine(event)">
+            <div class="form-group">
+              <label for="admin-med-name">Medicine Name *</label>
+              <input type="text" id="admin-med-name" class="form-control" placeholder="e.g. Azithromycin" required>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="admin-med-power">Strength / Power *</label>
+                <input type="text" id="admin-med-power" class="form-control" placeholder="e.g. 500mg" required>
+              </div>
+              <div class="form-group">
+                <label for="admin-med-branch">Department / Branch</label>
+                <select id="admin-med-branch" class="form-control">
+                  <option value="General">General</option>
+                  <option value="Cardiology">Cardiology</option>
+                  <option value="Dermatology">Dermatology</option>
+                  <option value="Orthopedics">Orthopedics</option>
+                  <option value="Pediatrics">Pediatrics</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="admin-med-mfg">Manufacturer</label>
+                <input type="text" id="admin-med-mfg" class="form-control" placeholder="e.g. Cipla" required>
+              </div>
+              <div class="form-group">
+                <label for="admin-med-mrp">MRP Price (₹)</label>
+                <input type="number" id="admin-med-mrp" step="0.5" class="form-control" placeholder="e.g. 75.00" required>
+              </div>
+              <div class="form-group">
+                <label for="admin-med-stock">Initial Stock</label>
+                <input type="number" id="admin-med-stock" class="form-control" placeholder="e.g. 100" required>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">+ Save New Medicine</button>
+          </form>
+        </div>
+
+        <!-- System Controls & Inventory Summary -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">⚙️ System & Data Management</h2>
+              <span class="card-subtitle">Manage clinic database state</span>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <div style="background: var(--surface-alt); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+              <h3 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.25rem;">Reset System to Demo State</h3>
+              <p style="font-size: 0.825rem; color: var(--text-muted); margin-bottom: 0.75rem;">Restores original test patients and medicines from HELIX default dataset.</p>
+              <button class="btn btn-danger btn-sm" onclick="resetToDemoData()">🔄 Reset to Sample Data</button>
+            </div>
+
+            <div style="background: var(--surface-alt); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+              <h3 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.25rem;">Role Login Credentials</h3>
+              <ul style="font-size: 0.8rem; color: var(--text-muted); list-style-position: inside; line-height: 1.6;">
+                <li>Doctor: <code>doctor</code> / <code>doctor</code> (Doctor consultation only)</li>
+                <li>Nurse: <code>nurse</code> / <code>nurse</code> (Patient intake & queue only)</li>
+                <li>Medical Staff: <code>medical</code> / <code>medical</code> (Stock management & dispensing)</li>
+                <li>Administrator: <code>admin</code> / <code>admin</code> (Full controls & role switcher)</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Notification Toast Container -->
+  <div id="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
