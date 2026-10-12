@@ -31,3 +31,6 @@ git push -u origin docs/my-change
 ```
 
 Changes made on GitHub can be synchronized to your local clone with `git pull origin main`.
+
+
+to run this code go to terminal and type "Serving HTTP on 0.0.0.0 port 8000"
